@@ -1,4 +1,5 @@
 ### pyFunc3D ###
+![alt text](https://github.com/freesynapse/pyFunc3D/blob/master/misc/screenshot.png?raw=true)
 Python OpenGL (modernGL) implementation of 3d function plotting. A basic lighting model
 is implemented, as well as the use of barycentric coordinates for plotting a quad 
 wireframe. Normals are computed using central differences.
