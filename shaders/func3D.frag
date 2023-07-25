@@ -5,6 +5,7 @@ layout (location=0) out vec4 frag_color;
 in vec3 v_normal;
 in vec3 v_frag_pos;
 in vec3 v_barycentric;
+in vec3 v_color;
 
 uniform vec3 u_cam_pos;
 
@@ -65,7 +66,9 @@ vec4 get_wireframe(vec3 barycentric, vec3 fill_color, vec3 stroke_color)
 //
 void main()
 {
-    vec3 fcolor = apply_lighting(fill_color);
+    vec3 fcolor = apply_lighting(v_color);
+    //vec3 fcolor = apply_lighting(fill_color);
+
     vec4 final_color = get_wireframe(v_barycentric, fcolor, stroke_color);
     frag_color = final_color;
 

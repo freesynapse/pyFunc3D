@@ -16,13 +16,13 @@ class Func3D:
     def __init__(self, window_size=WIN_RES):
         t0 = time.perf_counter_ns()
         self.window_size = window_size
-        # Init PyGame and set OpenGL attributes
+        # init PyGame and set OpenGL attributes
         pg.init()
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MINOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.gl_set_attribute(pg.GL_DEPTH_SIZE, 24)
-        pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
+        self.surface = pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
         
         # OpenGL context and settings
         self.ctx = mgl.create_context()
@@ -40,12 +40,12 @@ class Func3D:
         pg.event.set_grab(True)
         pg.mouse.set_visible(False)
         
-        print(f'Core modules initialized in {(time.perf_counter_ns() - t0)/1e6} ms.')
-        
         self.is_running = True
         self.is_loaded = False
         
         self.on_init()
+        
+        print(f'Core modules initialized in {(time.perf_counter_ns() - t0)/1e6} ms.')
     
     #
     def on_init(self):
@@ -59,9 +59,11 @@ class Func3D:
                          y : np.ndarray, 
                          z : np.ndarray,
                          func_id : str=None):
-        self.scene.add_data(x, y, z, func_id)
-        #self.scene.add_axes(x_linspace, z_linspace)
+        t0 = time.perf_counter_ns()
+        func3D_obj_id = self.scene.add_data(x, y, z, func_id)
+        #self.scene.add_axes(func3D_obj_id)
         self.is_loaded = True
+        print(f'Meshes created in {(time.perf_counter_ns() - t0)/1e6} ms.')
     
     #
     def handle_events(self):
@@ -71,10 +73,14 @@ class Func3D:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
                     self.is_running = False
+                # DEBUG : print camera state
                 if event.key == pg.K_c:
                     print('Camera state:')
                     attrs = vars(self.camera)
                     [print(f'\t{item}') for item in attrs.items()]
+                # take screenshot
+                if event.key == pg.K_z:
+                    pg.image.save(self.surface, './screenshot.png')
     
     #
     def update(self):

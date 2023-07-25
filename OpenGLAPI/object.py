@@ -68,8 +68,8 @@ class Func3DObj(BaseObject):
                  rot=(0, 0, 0), scale=(1, 1, 1), obj_id=None):
         super().__init__(app, pos, rot, scale, obj_id)
 
-        self.vbo_format = '3f 3f 3f'
-        self.shader_attrs = ['a_position', 'a_normal', 'a_barycentric']
+        self.vbo_format = '3f 3f 3f 3f'
+        self.shader_attrs = ['a_position', 'a_normal', 'a_barycentric', 'a_color']
         self.mesh = Func3DMesh(x, y, z)
         self.vbo = self.ctx.buffer(self.mesh.vertex_data)
         self.shader = self.app.shader_manager.programs[shader]
@@ -91,19 +91,17 @@ class Func3DObj(BaseObject):
 class AxesObj(BaseObject):
     def __init__(self, 
                  app, 
-                 func3dobj : Func3DObj,
-                 #xlim : tuple = (-1, 1),
-                 #ylim : tuple = (-1, 1),
-                 #zlim : tuple = (-1, 1),
+                 func3DObj : Func3DObj,
                  shader : str = 'axes', 
                  obj_id : str = 'axes'):
         super().__init__(app, (0, 0, 0), (0, 0, 0), (1, 1, 1), obj_id)
         self.primitive = mgl.LINES
         self.vbo_format = '3f 1f'
         self.shader_attrs = ['a_position', 'a_color_index']
-        self.mesh = AxesMesh(xlim=xlim, 
-                             ylim=ylim,
-                             zlim=ylim)
+        func_mesh = func3DObj.mesh
+        self.mesh = AxesMesh(xlim=(func_mesh.x[0], func_mesh.x[-1]),
+                             ylim=func_mesh.ylim,
+                             zlim=(func_mesh.z[0], func_mesh.z[-1]))
         self.vbo = self.ctx.buffer(self.mesh.vertex_data)
         self.shader = self.app.shader_manager.programs[shader]
         self.vao = self.ctx.vertex_array(self.shader,

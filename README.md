@@ -1,4 +1,4 @@
-# spectrogram3D
+### pyFunc3D ###
 Python OpenGL (modernGL) implementation of 3d function plotting. A basic lighting model
 is implemented, as well as the use of barycentric coordinates for plotting a quad 
 wireframe. Normals are computed using central differences.
@@ -15,6 +15,5 @@ wireframe. Normals are computed using central differences.
   over longer time periods).
 * debug rendering of light source
 
-*** IMPLEMENTED ***
-* axes
+
 

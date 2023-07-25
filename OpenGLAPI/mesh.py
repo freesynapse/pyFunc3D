@@ -3,7 +3,7 @@ import numpy as np
 import glm
 from numba import njit
 from settings import *
-
+from matplotlib import colors, cm
 
 #
 class BaseMesh:
@@ -87,11 +87,14 @@ class Func3DMesh(BaseMesh):
         self.x = MESH_SCALE[0] * (self.x / np.max(np.abs(self.x)))
         self.y = MESH_SCALE[1] * (self.y / np.max(np.abs(self.y)))
         self.z = MESH_SCALE[2] * (self.z / np.max(np.abs(self.z)))
+        
+        # find ylim
+        self.ylim = (np.min(self.y.flatten()), np.max(self.y.flatten()))
             
         self.nx, self.nz = self.x.shape[0], self.z.shape[0]
         assert((self.nx * self.nz) == self.y.size)
         self.vertex_data = self.get_vertex_data()
-        print(f'vertices: {self.vertex_data.shape[0]}, tris: {self.vertex_data.shape[0]//3}')
+        print(f'vertices: {self.vertex_data.shape[0]}, triangles: {self.vertex_data.shape[0]//3}')
         
     #
     @staticmethod
@@ -199,32 +202,39 @@ class Func3DMesh(BaseMesh):
 
         # pack vertex data
         vertex_data = self.get_data(vertices, indices)
+
         # add barycentric coordinates
-        #  -> for TRI order 0, 1, 2, 2, 3, 0 this corresponds to 0, 1, 2, 2, 1, 0
-        ##vertex_data[:, 3] = np.tile([0, 1, 2, 2, 1, 0], reps=vertex_data.shape[0]//6)
-        #
         barycentric = []
         Q = 1   # remove diagnoal edge?
         for i in range(vertex_data.shape[0]//3):
             even = i % 2
             if even:
                 barycentric.append((1, 0, 0))
-                barycentric.append((0, 1, 1))
+                barycentric.append((0, 1, Q))
                 barycentric.append((0, 0, 1))
             else:
                 barycentric.append((1, 0, 0))
-                barycentric.append((1, 1, 0))
+                barycentric.append((Q, 1, 0))
                 barycentric.append((0, 0, 1))
         barycentric = np.array(barycentric, dtype='f4')
         
         #barycentric = np.tile([1, 1, 1, 0, 0, 0], reps=vertex_data.shape[0]//6)
         #barycentric = np.array(barycentric, dtype='uint8').reshape(-1, 1)
-        
+                
         # pack data for GPU upload
-        normal_data = np.array(self.get_data(normals, indices), dtype='f4')
+        normal_data = self.get_data(normals, indices)
         vertex_data = np.hstack([vertex_data, normal_data])
         vertex_data = np.hstack([vertex_data, barycentric])
-        #
+        
+        # add linear color map -- map to cm.jet on y value
+        #crange = np.linspace(self.ylim[0], self.ylim[1], 255)
+        norm_colors = colors.Normalize(vmin=self.ylim[0], vmax=self.ylim[1], clip=True)
+        color_mapper = cm.ScalarMappable(norm=norm_colors, cmap=cm.jet)
+        # get vec3 per vertex y value (currently in vertex_data[:, 1])
+        color_data = np.array(color_mapper.to_rgba(vertex_data[:, 1])[:, :3], dtype='f4')
+        # add color to vertex_data
+        vertex_data = np.hstack([vertex_data, color_data])
+        
         return vertex_data
 
 #
