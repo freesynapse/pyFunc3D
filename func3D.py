@@ -115,20 +115,13 @@ if __name__ == '__main__':
     app = Func3D()
     #
     xd, zd = 6.0, 10.0
-    nx, nz = 100, 100
-    scale = 2.0
+    nx, nz = 100, 50
+    scale = 20.0
     x, z = np.linspace(-xd, xd, nx), np.linspace(-zd, zd, nz)
     
-    #y = []
-    #for zz in z:
-    #    for xx in x:
-    #        y.append((scale * np.sin(2.0 * xx) * scale * np.cos(1.0 * zz) / 2.0))
-    #y = np.array(y).reshape(z.shape[0], x.shape[0])
-    #app.load_numpy_array(x, y, z)
-    
     X, Z = np.meshgrid(x, z)
-    Y = (scale * np.sin(2.0 * X) * scale * np.cos(1.0 * Z) / 2.0)
-    app.load_numpy_array(x, Y, z)
+    y = (scale * np.sin(1.0 * X) * scale * np.cos(0.4 * Z) / 2.0)
+    app.load_numpy_array(x, y, z)
     #
     app.run()
 

@@ -2,6 +2,7 @@
 import numpy as np
 import glm
 from numba import njit
+from settings import *
 
 
 #
@@ -51,13 +52,46 @@ class Func3DMesh(BaseMesh):
                  y : np.ndarray,    # the data
                  z : np.ndarray):
         super().__init__()
-        # rescale everything into (-5, 5) range for all axes
-        self.x = x.copy()
-        self.y = y.copy()
-        self.z = z.copy()
+        self.x, self.y, self.z = x.copy(), y.copy(), z.copy()
+        # store limits for later access
+        self.xlim = (self.x[0], self.x[-1])
+        self.ylim = (np.min(self.y), np.max(self.y))
+        self.zlim = (self.z[0], self.z[-1])
+        
+        # interpolate the axis of the lowest resolution to match the highest
+        if x.shape != z.shape:
+            print('interpolating function to new axes... ', end='')
+            # y is of shape (z, x), so will have to be interpolated to fit the new shape
+            max_dim = max(z.shape[0], x.shape[0])
+            y_interp = np.zeros(shape=(max_dim, max_dim))
+            #
+            if x.shape[0] < z.shape[0]:
+                self.x = np.linspace(self.xlim[0], self.xlim[1], max_dim)
+                print(f'\tnew x shape = {self.x.shape}')
+                # y is interpolated over new shape of axis=1 (column-wise)
+                for i in np.arange(self.x.shape[0]):
+                    y_row_i = np.interp(x=self.x, xp=x, fp=self.y[i,:])
+                    y_interp[i,:] = y_row_i
+            #    
+            else: # z.shape[0] < x.shape[0]
+                self.z = np.linspace(self.zlim[0], self.zlim[1], max_dim)
+                # y is interpolated over new shape of axis=0 (row-wise)
+                for i in np.arange(self.z.shape[0]):
+                    y_col_i = np.interp(x=self.z, xp=z, fp=self.y[:,i])
+                    y_interp[:,i] = y_col_i
+            #                    
+            self.y = y_interp
+            print('done.')
+            
+        # rescale everything
+        self.x = MESH_SCALE[0] * (self.x / np.max(np.abs(self.x)))
+        self.y = MESH_SCALE[1] * (self.y / np.max(np.abs(self.y)))
+        self.z = MESH_SCALE[2] * (self.z / np.max(np.abs(self.z)))
+            
         self.nx, self.nz = self.x.shape[0], self.z.shape[0]
-        assert((self.nx * self.nz) == self.y.size)        
+        assert((self.nx * self.nz) == self.y.size)
         self.vertex_data = self.get_vertex_data()
+        print(f'vertices: {self.vertex_data.shape[0]}, tris: {self.vertex_data.shape[0]//3}')
         
     #
     @staticmethod

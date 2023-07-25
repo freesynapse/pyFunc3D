@@ -92,9 +92,9 @@ class AxesObj(BaseObject):
     def __init__(self, 
                  app, 
                  func3dobj : Func3DObj,
-                 #xlim : tuple = (-5, 5),
-                 #ylim : tuple = (-5, 5),
-                 #zlim : tuple = (-5, 5),
+                 #xlim : tuple = (-1, 1),
+                 #ylim : tuple = (-1, 1),
+                 #zlim : tuple = (-1, 1),
                  shader : str = 'axes', 
                  obj_id : str = 'axes'):
         super().__init__(app, (0, 0, 0), (0, 0, 0), (1, 1, 1), obj_id)
