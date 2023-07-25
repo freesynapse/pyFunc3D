@@ -7,16 +7,14 @@ from numba import njit
 #
 class BaseMesh:
     def __init__(self):
-        self.ctx = None
         self.vertex_data : np.array = None
     
     def get_vertex_data(self): ...
 
 #
 class DebugCubeMesh(BaseMesh):
-    def __init__(self, ctx):
+    def __init__(self):
         super().__init__()
-        self.ctx = ctx
         self.vertex_data = self.get_vertex_data()
     
     @staticmethod
@@ -48,15 +46,17 @@ class DebugCubeMesh(BaseMesh):
 
 #
 class Func3DMesh(BaseMesh):
-    def __init__(self, ctx, data : np.ndarray, x_linspace : np.ndarray, 
-                 z_linspace : np.ndarray):
+    def __init__(self, 
+                 x : np.ndarray, 
+                 y : np.ndarray,    # the data
+                 z : np.ndarray):
         super().__init__()
-        self.ctx = ctx
-        self.Y = data.copy()
-        self.X = x_linspace.copy()
-        self.Z = z_linspace.copy()
-        self.nx, self.nz = self.X.shape[0], self.Z.shape[0]
-        assert((self.nx * self.nz) == self.Y.size)        
+        # rescale everything into (-5, 5) range for all axes
+        self.x = x.copy()
+        self.y = y.copy()
+        self.z = z.copy()
+        self.nx, self.nz = self.x.shape[0], self.z.shape[0]
+        assert((self.nx * self.nz) == self.y.size)        
         self.vertex_data = self.get_vertex_data()
         
     #
@@ -68,23 +68,16 @@ class Func3DMesh(BaseMesh):
     #
     #@njit
     def get_vertex_data(self):
-        # create a surface to play with
-        #d = 6.0
-        #nx, nz = 100, 100
-        #x, z = np.linspace(-d, d, nx), np.linspace(-d, d, nz)
-        #X, Z = np.meshgrid(x, z)
-        #Y = (np.sin(2.0 * X) * np.cos(1.0 * Z) / 2.0)
-        #Y = (np.sin(0.0 * X) * np.cos(0.0 * Z) / 2.0)
-        x, z = self.X, self.Z
+        x, z = self.x, self.z
         nx, nz = self.nx, self.nz
         vertices, indices, normals = [], [], []
-        Y1d = self.Y.flatten()
+        y1d = self.y.flatten()
 
         # vertices
         for i in np.arange(nz):
             for j in np.arange(nx):
                 k = i * nx + j
-                vertices.append((x[j], Y1d[k], z[i]))
+                vertices.append((x[j], y1d[k], z[i]))
                 
         # calculate indices (both for vertices and normals)
         for i in np.arange(nz-1):
@@ -105,16 +98,16 @@ class Func3DMesh(BaseMesh):
                 if i > 0 and i < (nz-1) and j > 0 and j < (nx - 1):
                     # L -> P :  [ x - (x-1),  f(x,z) - f(x-1,z),  z - z ] =
                     #           [ 1.0, f(x,z) - f(x-1,z), 0.0 ]
-                    LP = glm.vec3(x[j]-x[j-1], Y1d[k]-Y1d[L], 0.0)
+                    LP = glm.vec3(x[j]-x[j-1], y1d[k]-y1d[L], 0.0)
                     # P -> R :  [ (x+1) - x,  f(x+1,z) - f(x,z),  z - z ] =
                     #           [ 1.0, f(x+1,z) - f(x,z), 0.0 ]
-                    PR = glm.vec3(x[j+1]-x[j], Y1d[R]-Y1d[k], 0.0)
+                    PR = glm.vec3(x[j+1]-x[j], y1d[R]-y1d[k], 0.0)
                     # U -> P :  [ x - x,  f(x,z) - f(x,z-1),  z - (z-1) ] =
                     #           [ 0.0, f(x,z) - f(x,z-1), 1.0 ]
-                    UP = glm.vec3(0.0, Y1d[k]-Y1d[U], z[i]-z[i-1])
+                    UP = glm.vec3(0.0, y1d[k]-y1d[U], z[i]-z[i-1])
                     # P -> D :  [ x - x,  f(x,z+1) - f(x,z),  (z+1) - z ] =
                     #           [ 0.0, f(x,z+1) - f(x,z), 1.0 ]
-                    PD = glm.vec3(0.0, Y1d[D]-Y1d[k], z[i+1]-z[i])
+                    PD = glm.vec3(0.0, y1d[D]-y1d[k], z[i+1]-z[i])
 
                     UP_LP = glm.cross(UP, LP)
                     UP_PR = glm.cross(UP, PR)
@@ -125,11 +118,11 @@ class Func3DMesh(BaseMesh):
                 
                 # z borders, excluding corners
                 elif (i > 0 and i < (nz-1) and (j == 0 or j == (nx-1))):
-                    if (j == 0):    PX = glm.vec3(x[1]-x[0], Y1d[R]-Y1d[k], 0.0)
-                    else:           PX = glm.vec3(x[nx-1]-x[nx-2], Y1d[k]-Y1d[L], 0.0)
+                    if (j == 0):    PX = glm.vec3(x[1]-x[0], y1d[R]-y1d[k], 0.0)
+                    else:           PX = glm.vec3(x[nx-1]-x[nx-2], y1d[k]-y1d[L], 0.0)
 
-                    UP = glm.vec3(0.0, Y1d[k]-Y1d[U], z[i]-z[i-1])
-                    PD = glm.vec3(0.0, Y1d[D]-Y1d[k], z[i+1]-z[i])
+                    UP = glm.vec3(0.0, y1d[k]-y1d[U], z[i]-z[i-1])
+                    PD = glm.vec3(0.0, y1d[D]-y1d[k], z[i+1]-z[i])
 
                     UP_PX = glm.cross(UP, PX)
                     PD_PX = glm.cross(PD, PX)
@@ -138,11 +131,11 @@ class Func3DMesh(BaseMesh):
 
                 # x borders, excluding corners
                 elif (j > 0 and j < (nx-1) and (i == 0 or i == (nz-1))):
-                    if (i == 0):    PZ = glm.vec3(0.0, Y1d[D]-Y1d[k], z[1]-z[0])
-                    else:           PZ = glm.vec3(0.0, Y1d[k]-Y1d[U], z[nz-1]-z[nz-2])
+                    if (i == 0):    PZ = glm.vec3(0.0, y1d[D]-y1d[k], z[1]-z[0])
+                    else:           PZ = glm.vec3(0.0, y1d[k]-y1d[U], z[nz-1]-z[nz-2])
 
-                    PR = glm.vec3(x[j+1]-x[j], Y1d[R]-Y1d[k], 0.0)
-                    LP = glm.vec3(x[j]-x[j-1], Y1d[k]-Y1d[L], 0.0)
+                    PR = glm.vec3(x[j+1]-x[j], y1d[R]-y1d[k], 0.0)
+                    LP = glm.vec3(x[j]-x[j-1], y1d[k]-y1d[L], 0.0)
 
                     PZ_LP = glm.cross(PZ, LP)
                     PZ_PR = glm.cross(PZ, PR)
@@ -151,20 +144,20 @@ class Func3DMesh(BaseMesh):
 
                 # corners
                 elif (i == 0 and j == 0):
-                    PR = glm.vec3(x[1]-x[0], Y1d[R]-Y1d[k], 0.0)
-                    PD = glm.vec3(0.0, Y1d[D]-Y1d[k], z[1]-z[0])
+                    PR = glm.vec3(x[1]-x[0], y1d[R]-y1d[k], 0.0)
+                    PD = glm.vec3(0.0, y1d[D]-y1d[k], z[1]-z[0])
                     sum = glm.cross(PD, PR)
                 elif (i == 0 and j == (nx-1)):
-                    LP = glm.vec3(x[nx-1]-x[nx-2], Y1d[k]-Y1d[L], 0.0)
-                    PD = glm.vec3(0.0, Y1d[D]-Y1d[k], z[1]-z[0])
+                    LP = glm.vec3(x[nx-1]-x[nx-2], y1d[k]-y1d[L], 0.0)
+                    PD = glm.vec3(0.0, y1d[D]-y1d[k], z[1]-z[0])
                     sum = glm.cross(PD, LP)
                 elif (i == (nz-1) and j == 0):
-                    PR = glm.vec3(x[1]-x[0], Y1d[R]-Y1d[k], 0.0)
-                    UP = glm.vec3(0.0, Y1d[k]-Y1d[U], z[nz-1]-z[nz-2])
+                    PR = glm.vec3(x[1]-x[0], y1d[R]-y1d[k], 0.0)
+                    UP = glm.vec3(0.0, y1d[k]-y1d[U], z[nz-1]-z[nz-2])
                     sum = glm.cross(UP, PR)
                 elif (i == (nz-1) and j == (nx-1)):
-                    LP = glm.vec3(x[nx-1]-x[nx-2], Y1d[k]-Y1d[L], 0.0)
-                    UP = glm.vec3(0.0, Y1d[k]-Y1d[U], z[nz-1]-z[nz-2])
+                    LP = glm.vec3(x[nx-1]-x[nx-2], y1d[k]-y1d[L], 0.0)
+                    UP = glm.vec3(0.0, y1d[k]-y1d[U], z[nz-1]-z[nz-2])
                     sum = glm.cross(UP, LP)
 
                 # set vertex normal
@@ -199,3 +192,28 @@ class Func3DMesh(BaseMesh):
         vertex_data = np.hstack([vertex_data, barycentric])
         #
         return vertex_data
+
+#
+class AxesMesh(BaseMesh):
+    def __init__(self, xlim, ylim, zlim):
+        super().__init__()
+        self.xlim, self.ylim, self.zlim = xlim, ylim, zlim
+        self.vertex_data = self.get_vertex_data()
+
+    @staticmethod
+    def get_data(vertices, indices):
+        data = [vertices[ind] for triangle in indices for ind in triangle]
+        return np.array(data, dtype='f4')
+
+    #
+    def get_vertex_data(self):
+        o = glm.vec3(self.xlim[0], self.ylim[0], self.zlim[0])
+        vertices = [(o.x, o.y, o.z), (self.xlim[1], o.y, o.z), 
+                    (o.x, o.y, o.z), (o.x, self.ylim[1], o.z),
+                    (o.x, o.y, o.z), (o.x, o.y, self.zlim[1])]
+        vertex_data = np.array(vertices, dtype='f4')
+        colors = np.array([0.0, 0.0, 1.0, 1.0, 2.0, 2.0], dtype='f4').reshape(-1, 1)
+        vertex_data = np.hstack([vertex_data, colors])
+        
+        return vertex_data
+

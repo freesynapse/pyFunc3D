@@ -13,6 +13,7 @@ class BaseObject:
         self.shader : mgl.Context.program = None
         self.vao : mgl.Context.vertex_array = None
         self.obj_id = obj_id
+        self.primitive = mgl.TRIANGLES
         #
         self.pos = glm.vec3(pos)
         self.rot = glm.vec3(rot)
@@ -36,7 +37,8 @@ class BaseObject:
     def update(self, camera): ...
     def render(self, camera):
         self.update(camera)
-        self.vao.render()
+        #print(f'{self.primitive} == {mgl.LINES} : {self.primitive == mgl.LINES}')
+        self.vao.render(self.primitive)
         
         
 #
@@ -44,7 +46,7 @@ class DebugCubeObj(BaseObject):
     def __init__(self, app, shader='debug', pos=(0, 0, 0), rot=(0, 0, 0), 
                  scale=(1, 1, 1)):
         super().__init__(app, pos, rot, scale)
-        self.mesh = DebugCubeMesh(self.ctx)
+        self.mesh = DebugCubeMesh()
         self.vbo_format = '3f 3f'
         self.shader_attrs = ['a_position', 'a_normal']
         self.vbo = self.ctx.buffer(self.mesh.vertex_data)
@@ -53,33 +55,29 @@ class DebugCubeObj(BaseObject):
                                          [(self.vbo, self.vbo_format, *self.shader_attrs)],
                                          skip_errors=True)
 
-    def on_init(self):
-        pass
+    def on_init(self): pass
     
     def update(self, camera):
         self.shader['m_model'].write(self.m_model)
         self.shader['m_view'].write(camera.m_view)
         self.shader['m_proj'].write(camera.m_proj)
-        
-
 
 #
 class Func3DObj(BaseObject):
-    def __init__(self, app, data, x_linspace, z_linspace, shader, pos=(0, 0, 0), 
+    def __init__(self, app, x, y, z, shader, pos=(0, 0, 0), 
                  rot=(0, 0, 0), scale=(1, 1, 1), obj_id=None):
         super().__init__(app, pos, rot, scale, obj_id)
 
         self.vbo_format = '3f 3f 3f'
         self.shader_attrs = ['a_position', 'a_normal', 'a_barycentric']
-        self.mesh = Func3DMesh(self.ctx, data, x_linspace, z_linspace)
+        self.mesh = Func3DMesh(x, y, z)
         self.vbo = self.ctx.buffer(self.mesh.vertex_data)
         self.shader = self.app.shader_manager.programs[shader]
         self.vao = self.ctx.vertex_array(self.shader, 
                                          [(self.vbo, self.vbo_format, *self.shader_attrs)],
                                          skip_errors=True)
     #
-    def on_init(self):
-        pass
+    def on_init(self): pass
             
     #
     def update(self, camera):
@@ -87,6 +85,39 @@ class Func3DObj(BaseObject):
         self.shader['m_view'].write(camera.m_view)
         self.shader['m_proj'].write(camera.m_proj)
         self.shader['u_cam_pos'].write(camera.position)
+
+
+#
+class AxesObj(BaseObject):
+    def __init__(self, 
+                 app, 
+                 func3dobj : Func3DObj,
+                 #xlim : tuple = (-5, 5),
+                 #ylim : tuple = (-5, 5),
+                 #zlim : tuple = (-5, 5),
+                 shader : str = 'axes', 
+                 obj_id : str = 'axes'):
+        super().__init__(app, (0, 0, 0), (0, 0, 0), (1, 1, 1), obj_id)
+        self.primitive = mgl.LINES
+        self.vbo_format = '3f 1f'
+        self.shader_attrs = ['a_position', 'a_color_index']
+        self.mesh = AxesMesh(xlim=xlim, 
+                             ylim=ylim,
+                             zlim=ylim)
+        self.vbo = self.ctx.buffer(self.mesh.vertex_data)
+        self.shader = self.app.shader_manager.programs[shader]
+        self.vao = self.ctx.vertex_array(self.shader,
+                                         [(self.vbo, self.vbo_format, *self.shader_attrs)],
+                                         skip_errors=True)
+        
+    # 
+    def on_init(self): pass
+    
+    #
+    def update(self, camera):
+        self.shader['m_model'].write(self.m_model)
+        self.shader['m_view'].write(camera.m_view)
+        self.shader['m_proj'].write(camera.m_proj)
 
 
 

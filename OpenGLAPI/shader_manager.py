@@ -5,6 +5,7 @@ class ShaderManager(object):
         self.ctx = ctx
         self.programs = {}
         self.programs['func3D'] = self.load_program('func3D')
+        self.programs['axes'] = self.load_program('axes')
         self.programs['debug'] = self.load_program('debug')
     
     def load_program(self, shader_name, geometry_shader=False):

@@ -11,12 +11,16 @@ class Scene:
         self.object_count = 0
         #self.objects['f'] = Func3DObj(app, shader='func3D')
         #self.objects.append(DebugCubeObj(app, shader='debug'))
+
+    def add_axes(self, x_linspace, z_linspace, id='axes'):
+        self.objects[id] = AxesObj(self.app, shader='axes', obj_id=id)
+        self.object_count += 1
         
-    def add_data(self, data : np.ndarray, x_linspace, z_linspace, func_id=None):
+    def add_data(self, x, y, z, func_id=None):
         obj_id = func_id
         if func_id is None:
             obj_id = 'func' + str(self.object_count)    
-        self.objects[obj_id] = Func3DObj(self.app, data, x_linspace, z_linspace, shader='func3D')
+        self.objects[obj_id] = Func3DObj(self.app, x, y, z, shader='func3D')
         self.object_count += 1
         
     def render(self, camera):
