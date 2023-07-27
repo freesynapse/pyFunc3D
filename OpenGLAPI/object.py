@@ -76,8 +76,26 @@ class Func3DObj(BaseObject):
         self.vao = self.ctx.vertex_array(self.shader, 
                                          [(self.vbo, self.vbo_format, *self.shader_attrs)],
                                          skip_errors=True)
+        self.wireframe = False
+        self.lighting = True
+        #self.Ipos = glm.vec3(self.mesh.x[0], self.mesh.ylim[1]+3.0, self.mesh.z[0])
+        self.Ipos = glm.vec3(2.5, 5.0, -2.5)
+        #
+        self.on_init()
+        
     #
-    def on_init(self): pass
+    def toggle_wireframe(self):
+        self.wireframe = not self.wireframe
+        print(f'wireframe: {str(self.wireframe)}')
+        
+    #
+    def toggle_lights(self):
+        self.lighting = not self.lighting
+        print(f'lighting: {str(self.lighting)}')
+    
+    #
+    def on_init(self): 
+        self.shader['u_Ipos'].write(self.Ipos)
             
     #
     def update(self, camera):
@@ -85,6 +103,8 @@ class Func3DObj(BaseObject):
         self.shader['m_view'].write(camera.m_view)
         self.shader['m_proj'].write(camera.m_proj)
         self.shader['u_cam_pos'].write(camera.position)
+        self.shader['u_use_wireframe'].write(np.array(self.wireframe, dtype='int32'))
+        self.shader['u_use_lighting'].write(np.array(self.lighting, dtype='int32'))
 
 
 #

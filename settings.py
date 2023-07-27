@@ -17,7 +17,7 @@ ZOOM_SPEED = 0.01
 EPSILON = 1e-7
 
 # 3D functions
-MESH_SCALE = (5.0, 1.0, 5.0)    # scale of (x, y, z) axes in mesh, rescaled in Func3DMesh 
+MESH_SCALE = (5.0, 1.5, 5.0)    # scale of (x, y, z) axes in mesh, rescaled in Func3DMesh 
                                 # constructor
 
 

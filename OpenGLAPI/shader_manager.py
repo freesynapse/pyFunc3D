@@ -1,8 +1,10 @@
 
+import moderngl as mgl
+
 
 class ShaderManager(object):
     def __init__(self, ctx):
-        self.ctx = ctx
+        self.ctx : mgl.Context = ctx
         self.programs = {}
         self.programs['func3D'] = self.load_program('func3D')
         self.programs['axes'] = self.load_program('axes')
@@ -23,8 +25,7 @@ class ShaderManager(object):
         else:
             program = self.ctx.program(vertex_shader=vertex_shader, 
                                        fragment_shader=fragment_shader)
-        
-        return program
+
+        #print(program.__dict__)
             
-    def destroy(self):
-        [program.release() for program in self.programs.values()]
+        return program

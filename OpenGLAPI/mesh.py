@@ -52,6 +52,13 @@ class Func3DMesh(BaseMesh):
                  y : np.ndarray,    # the data
                  z : np.ndarray):
         super().__init__()
+        
+        # if x or z is None
+        if x == None:
+            x = np.linspace(-1, 1, y.shape[1])
+        if z == None:
+            z = np.linspace(-1, 1, y.shape[0])  
+        #
         self.x, self.y, self.z = x.copy(), y.copy(), z.copy()
         # store limits for later access
         self.xlim = (self.x[0], self.x[-1])
@@ -255,6 +262,10 @@ class AxesMesh(BaseMesh):
         vertices = [(o.x, o.y, o.z), (self.xlim[1], o.y, o.z), 
                     (o.x, o.y, o.z), (o.x, self.ylim[1], o.z),
                     (o.x, o.y, o.z), (o.x, o.y, self.zlim[1])]
+        #o = glm.vec3(0, 2, 0)
+        #vertices = [(self.xlim[0], o.y, o.z), (self.xlim[1], o.y, o.z), 
+        #            (o.x, self.ylim[0], o.z), (o.x, self.ylim[1], o.z),
+        #            (o.x, o.y, self.zlim[0]), (o.x, o.y, self.zlim[1])]
         vertex_data = np.array(vertices, dtype='f4')
         colors = np.array([0.0, 0.0, 1.0, 1.0, 2.0, 2.0], dtype='f4').reshape(-1, 1)
         vertex_data = np.hstack([vertex_data, colors])
