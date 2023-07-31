@@ -17,11 +17,12 @@ class Scene:
                                             obj_id=axes_obj_id)
         self.object_count += 1
         
-    def add_data(self, x, y, z, func_id=None):
+    def add_data(self, x, y, z, equal_axes, func_id=None):
         obj_id = func_id
         if func_id is None:
             obj_id = 'func' + str(self.object_count)    
-        self.objects[obj_id] = Func3DObj(self.app, x, y, z, shader='func3D')
+        self.objects[obj_id] = Func3DObj(self.app, x, y, z, equal_axes=equal_axes,
+                                         shader='func3D')
         self.object_count += 1
         return obj_id
         

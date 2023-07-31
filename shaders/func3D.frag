@@ -10,6 +10,7 @@ in vec3 v_color;
 uniform vec3 u_cam_pos;
 uniform bool u_use_wireframe;
 uniform bool u_use_lighting;
+//uniform float u_mesh_alpha;
 uniform vec3 u_Ipos;
 // simple lighting constants
 //const vec3 Ipos = vec3(2.5, 5, -2.5);
@@ -59,8 +60,9 @@ vec4 get_wireframe(vec3 barycentric, vec3 fill_color, vec3 stroke_color)
    // now compute the final color of the mesh
    vec4 outColor = vec4(0.0);
    vec3 mainStroke = mix(fill_color, stroke_color, edge);
-   //outColor.a = 0.6;
    outColor.a = 1.0;
+   //outColor.a = 0.6;
+   //outColor.a = u_mesh_alpha;
    outColor.rgb = mainStroke;
 
    return outColor;
@@ -71,6 +73,8 @@ void main()
     vec3 fcolor;
     if (u_use_lighting)
         fcolor = apply_lighting(v_color);
+    else
+        fcolor = v_color;
 
     if (u_use_wireframe)
         frag_color = get_wireframe(v_barycentric, fcolor, stroke_color);

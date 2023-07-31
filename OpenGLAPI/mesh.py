@@ -49,15 +49,18 @@ class DebugCubeMesh(BaseMesh):
 class Func3DMesh(BaseMesh):
     def __init__(self, 
                  x : np.ndarray, 
-                 y : np.ndarray,    # the data
-                 z : np.ndarray):
+                 y : np.ndarray,        # the data
+                 z : np.ndarray,
+                 equal_axes : bool):    # how to treat y (m x n) where m != n
         super().__init__()
         
         # if x or z is None
-        if x == None:
+        if x.ndim == 0:
             x = np.linspace(-1, 1, y.shape[1])
-        if z == None:
+            print('updating x to', x.shape)
+        if z.ndim == 0:
             z = np.linspace(-1, 1, y.shape[0])  
+            print('updating z to', z.shape)
         #
         self.x, self.y, self.z = x.copy(), y.copy(), z.copy()
         # store limits for later access
@@ -65,8 +68,10 @@ class Func3DMesh(BaseMesh):
         self.ylim = (np.min(self.y), np.max(self.y))
         self.zlim = (self.z[0], self.z[-1])
         
+        (sx, sy, sz) = MESH_SCALE
+        
         # interpolate the axis of the lowest resolution to match the highest
-        if x.shape != z.shape:
+        if x.shape != z.shape and equal_axes == True:
             print('interpolating function to new axes... ', end='')
             # y is of shape (z, x), so will have to be interpolated to fit the new shape
             max_dim = max(z.shape[0], x.shape[0])
@@ -74,29 +79,36 @@ class Func3DMesh(BaseMesh):
             #
             if x.shape[0] < z.shape[0]:
                 self.x = np.linspace(self.xlim[0], self.xlim[1], max_dim)
-                print(f'\tnew x shape = {self.x.shape}')
+                print(f'\tnew x shape = {self.x.shape} (y shape along dim 0 = {y[0,:].shape})')
                 # y is interpolated over new shape of axis=1 (column-wise)
                 for i in np.arange(self.x.shape[0]):
-                    y_row_i = np.interp(x=self.x, xp=x, fp=self.y[i,:])
-                    y_interp[i,:] = y_row_i
+                    y_col_i = np.interp(x=self.x, xp=x, fp=self.y[:,i])
+                    y_interp[i,:] = y_col_i
             #    
             else: # z.shape[0] < x.shape[0]
                 self.z = np.linspace(self.zlim[0], self.zlim[1], max_dim)
                 # y is interpolated over new shape of axis=0 (row-wise)
                 for i in np.arange(self.z.shape[0]):
-                    y_col_i = np.interp(x=self.z, xp=z, fp=self.y[:,i])
-                    y_interp[:,i] = y_col_i
+                    y_row_i = np.interp(x=self.z, xp=z, fp=self.y[i,:])
+                    y_interp[:,i] = y_row_i
             #                    
             self.y = y_interp
             print('done.')
+        #
+        elif x.shape != z.shape and equal_axes == False:
+            if x.shape[0] < z.shape[0]:
+                sx *= (z.shape[0] / x.shape[0])
+            elif x.shape[0] > z.shape[0]:
+                sz *= (x.shape[0] / z.shape[0])
             
         # rescale everything
-        self.x = MESH_SCALE[0] * (self.x / np.max(np.abs(self.x)))
-        self.y = MESH_SCALE[1] * (self.y / np.max(np.abs(self.y)))
-        self.z = MESH_SCALE[2] * (self.z / np.max(np.abs(self.z)))
+        self.x = sx * (self.x / np.max(np.abs(self.x)))
+        self.y = sy * (self.y / np.max(np.abs(self.y)))
+        self.z = sz * (self.z / np.max(np.abs(self.z)))
         
         # find ylim
-        self.ylim = (np.min(self.y.flatten()), np.max(self.y.flatten()))
+        y1d = self.y.flatten()
+        self.ylim = (np.min(y1d), np.max(y1d))
             
         self.nx, self.nz = self.x.shape[0], self.z.shape[0]
         assert((self.nx * self.nz) == self.y.size)

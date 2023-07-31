@@ -124,10 +124,11 @@ class PerspectiveCamera(CameraObj):
 
 #
 class OrbitCamera(CameraObj):
-    def __init__(self, app, position=(0, 0, 0), x_angle=90, y_angle=35, radius=10.0):
+    def __init__(self, app, position=(-4, 4, -4), x_angle=90, y_angle=35):
         super().__init__(app, position, x_angle, y_angle)    
         self.type = 'SPH_ORBIT'
-        self.radius = radius
+        self.radius = glm.length(glm.vec3(position))
+
         x_rad, y_rad = glm.radians(self.x_angle), glm.radians(self.y_angle)
         self.position.x = self.radius * math.sin(y_rad) * math.cos(x_rad)
         self.position.y = self.radius * math.cos(y_rad)
@@ -210,11 +211,14 @@ class OrbitCamera(CameraObj):
         
         # zoom
         velocity = ZOOM_SPEED * self.app.dt
-        keys = pg.key.get_pressed()
-        if keys[pg.K_w]:
-            self.radius -= velocity
-        if keys[pg.K_s]:
-            self.radius += velocity
+        scroll_event = self.app.mousewheel_event
+        if scroll_event != None:
+            self.radius += (velocity * scroll_event.y)
+        #keys = pg.key.get_pressed()
+        #if keys[pg.K_w]:
+        #    self.radius -= velocity
+        #if keys[pg.K_s]:
+        #    self.radius += velocity
         self.radius = min(max(self.radius, 0.05), FAR+100.0)
         
     #

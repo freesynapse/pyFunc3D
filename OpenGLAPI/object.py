@@ -64,13 +64,13 @@ class DebugCubeObj(BaseObject):
 
 #
 class Func3DObj(BaseObject):
-    def __init__(self, app, x, y, z, shader, pos=(0, 0, 0), 
+    def __init__(self, app, x, y, z, equal_axes, shader, pos=(0, 0, 0), 
                  rot=(0, 0, 0), scale=(1, 1, 1), obj_id=None):
         super().__init__(app, pos, rot, scale, obj_id)
 
         self.vbo_format = '3f 3f 3f 3f'
         self.shader_attrs = ['a_position', 'a_normal', 'a_barycentric', 'a_color']
-        self.mesh = Func3DMesh(x, y, z)
+        self.mesh = Func3DMesh(x, y, z, equal_axes)
         self.vbo = self.ctx.buffer(self.mesh.vertex_data)
         self.shader = self.app.shader_manager.programs[shader]
         self.vao = self.ctx.vertex_array(self.shader, 
@@ -86,12 +86,12 @@ class Func3DObj(BaseObject):
     #
     def toggle_wireframe(self):
         self.wireframe = not self.wireframe
-        print(f'wireframe: {str(self.wireframe)}')
+        #print(f'wireframe: {str(self.wireframe)}')
         
     #
     def toggle_lights(self):
         self.lighting = not self.lighting
-        print(f'lighting: {str(self.lighting)}')
+        #print(f'lighting: {str(self.lighting)}')
     
     #
     def on_init(self): 
