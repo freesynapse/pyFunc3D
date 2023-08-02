@@ -58,9 +58,10 @@ class Func3DMesh(BaseMesh):
         if x.ndim == 0:
             x = np.linspace(-1, 1, y.shape[1])
             print('updating x to', x.shape)
-        if z.ndim == 0:
+        if  z.ndim == 0:
             z = np.linspace(-1, 1, y.shape[0])  
             print('updating z to', z.shape)
+
         #
         self.x, self.y, self.z = x.copy(), y.copy(), z.copy()
         # store limits for later access
@@ -72,14 +73,13 @@ class Func3DMesh(BaseMesh):
         
         # interpolate the axis of the lowest resolution to match the highest
         if x.shape != z.shape and equal_axes == True:
-            print('interpolating function to new axes... ', end='')
+            print('INFO: interpolating function to new axes... ', end='')
             # y is of shape (z, x), so will have to be interpolated to fit the new shape
             max_dim = max(z.shape[0], x.shape[0])
             y_interp = np.zeros(shape=(max_dim, max_dim))
             #
             if x.shape[0] < z.shape[0]:
                 self.x = np.linspace(self.xlim[0], self.xlim[1], max_dim)
-                print(f'\tnew x shape = {self.x.shape} (y shape along dim 0 = {y[0,:].shape})')
                 # y is interpolated over new shape of axis=1 (column-wise)
                 for i in np.arange(self.x.shape[0]):
                     y_col_i = np.interp(x=self.x, xp=x, fp=self.y[:,i])
@@ -96,10 +96,12 @@ class Func3DMesh(BaseMesh):
             print('done.')
         #
         elif x.shape != z.shape and equal_axes == False:
-            if x.shape[0] < z.shape[0]:
-                sx *= (z.shape[0] / x.shape[0])
-            elif x.shape[0] > z.shape[0]:
-                sz *= (x.shape[0] / z.shape[0])
+            print('INFO: adapting scales to account for unequal axes... ', end='')
+            if x.shape[0] > z.shape[0]:
+                sx *= (x.shape[0] / z.shape[0])
+            elif z.shape[0] > x.shape[0]:
+                sz *= (z.shape[0] / x.shape[0])
+            print('done. sx =', sx, ', sy =', sy, ', sz =', sz)
             
         # rescale everything
         self.x = sx * (self.x / np.max(np.abs(self.x)))

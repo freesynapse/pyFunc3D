@@ -166,13 +166,15 @@ if __name__ == '__main__':
         # remove data when FFT buffer not full
         freqs = freqs[40:,:]
         print(freqs.shape)
-        #import matplotlib.pyplot as plt
-        #fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12, 5))
-        #ax0.imshow(freqs)
-        #ax0.set_title('freqs')
-        #ax1.imshow(freqs.T)
-        #ax1.set_title('freqs.transpose()')
-        #plt.show()
+        PLOT = True
+        if PLOT:
+            import matplotlib.pyplot as plt
+            fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12, 5))
+            ax0.imshow(freqs)
+            ax0.set_title('freqs')
+            ax1.imshow(freqs.T)
+            ax1.set_title('freqs.transpose()')
+            plt.show()
 
         app.load_data(freqs,
                       equal_axes=False, 
@@ -200,7 +202,9 @@ if __name__ == '__main__':
         # flip y axis
         data = np.flip(data, axis=0)
         print(data.shape)
-        app.load_data(data, equal_axes=False, func_id='eeg')
+        app.load_data(data, 
+                      equal_axes=False, 
+                      func_id='eeg')
 
     
     # -----------------------------------------------------------------------------------
